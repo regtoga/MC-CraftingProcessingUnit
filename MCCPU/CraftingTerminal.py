@@ -3,6 +3,7 @@ import tkinter as tk
 
 from tkinter import ttk
 
+import CPUfile.CPU as CPU 
 
 class CraftingTerminal:
 
@@ -121,8 +122,12 @@ class CraftingTerminal:
         # Collect number of items wanted
         number_of_items = int("".join(segment.cget("text") for segment in self.seven_segments))
 
-        # Placeholder for crafting logic
-        print(f"Craft button pressed with items: {selected_items} and number: {number_of_items}")
+        Cpu = CPU.CraftingProcessingUnit()
+        Cpu.RetrieveDataFromMemory(selected_items)
+        
+
+        """# Placeholder for crafting logic
+        print(f"Craft button pressed with items: {selected_items} and number: {number_of_items}")"""
 
 
 

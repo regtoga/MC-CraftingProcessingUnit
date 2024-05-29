@@ -1,6 +1,8 @@
 #Import required libraries
 import tkinter as tk
 
+import CPUfile.CPU as CPU 
+
 class RecipeTerminal:
     def __init__(self, root):
         """The Recipe Terminal is a GUI that programs a recipe into the CraftingProcessingUnit"""
@@ -315,9 +317,47 @@ class RecipeTerminal:
         # Collect amount made per craft
         amount_per_craft = int("".join(segment.cget("text") for segment in self.seven_segments_amount))
 
-        # Placeholder for submit logic
-        print(f"Submit button pressed with recipe_type: {recipe_type}, address_bits: {address_bits}, crafted_address_bits: {crafted_address_bits}, amount_per_craft: {amount_per_craft}")
+        """# Placeholder for submit logic
+        print(f"Submit button pressed with recipe_type: {recipe_type}, address_bits: {address_bits}, crafted_address_bits: {crafted_address_bits}, amount_per_craft: {amount_per_craft}")"""
 
+        #Change the Crafting to a binary digit
+        if recipe_type == 'Crafting':
+            recipe_type = 0
+        else:
+            recipe_type = 1
+
+        #Convert the decimal int to binary
+        def convertdecimaltobinarywithzeros(tobebinary:int, sizeofbiggestnum:int=0) -> str:
+            """takes a number and converts it to binary, such as 3 -> 11.
+                if given a seccond argument that is larger than the result of the first binary number it will add zeros the the front of the number
+            """
+            result = format(tobebinary, 'b')
+            firstRun = True
+
+            #add the correct number of zeros to the binary number it also appends the recipe type to the beginging of the binary 
+            #so the first bit is there to signify the crafting type while the rest is there to tell the computer how many of these items there are
+            while len(result) < sizeofbiggestnum:
+                if firstRun == True:
+                    result = f"{recipe_type}{result}"
+                    firstRun = False
+                else:
+                    result = f"{result[0]}0{result[1:]}"
+
+            """#return the reversed string
+            return result[::-1]"""
+            return result
+        
+        #Convert the decimal int to binary
+        #the first bit in the binary sequence represents the recipie type, then we have 2 blank bits for use later if we need them, and 7 bits for the amount of items crafted this could probbly be reduced because the most items i know can be crafted at once is 8? not 64
+        recipie_type__amount_per_craft = []
+        for i, j in enumerate(convertdecimaltobinarywithzeros(amount_per_craft, 10)):
+            recipie_type__amount_per_craft.append(int(j))
+
+        Cpu = CPU.CraftingProcessingUnit()
+        Cpu.AddNewItemToMemory(address_bits, crafted_address_bits, recipie_type__amount_per_craft)
+
+
+        
         # After the data has been submitted, clear all the displays
         self.clear_all()
 
@@ -335,9 +375,6 @@ class RecipeTerminal:
 
 
 if __name__ == "__main__":
-
     root = tk.Tk()
-
     app = RecipeTerminal(root)
-
     root.mainloop()
