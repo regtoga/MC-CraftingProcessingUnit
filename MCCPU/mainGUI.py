@@ -3,6 +3,7 @@ import tkinter as tk
 
 from CraftingTerminal import CraftingTerminal
 from RecipeTerminal import RecipeTerminal
+from FakeChest import FakeChest
 
 
 
@@ -23,6 +24,10 @@ class MainApplication:
         self.recipe_frame.grid(row=0, column=1, padx=10, pady=10)
         self.recipe_terminal = RecipeTerminal(self.recipe_frame)
 
+        # Frame for Fake Chest
+        self.fake_chest = tk.LabelFrame(self.root, text="Fake Chest")
+        self.fake_chest.grid(row=1, column=0, columnspan=2, padx=10, pady=10, sticky="ew")
+        self.fake_chest_terminal = FakeChest(self.fake_chest)
 
 
 if __name__ == "__main__":
