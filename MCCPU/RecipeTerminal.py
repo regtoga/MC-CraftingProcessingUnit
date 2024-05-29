@@ -305,9 +305,20 @@ class RecipeTerminal:
 
     def submit(self):
         """Submit button's function to submit current data to the CraftingProcessingUnit"""
+        # Collect the recipe type
+        recipe_type = self.toggle_button.cget("text")
+
+        # Collect address bits
+        address_bits = self.address_bits
+        crafted_address_bits = self.crafted_address_bits
+
+        # Collect amount made per craft
+        amount_per_craft = int("".join(segment.cget("text") for segment in self.seven_segments_amount))
+
         # Placeholder for submit logic
-        print("Submit button pressed")
-        #after the data has been submitted clear all the displays
+        print(f"Submit button pressed with recipe_type: {recipe_type}, address_bits: {address_bits}, crafted_address_bits: {crafted_address_bits}, amount_per_craft: {amount_per_craft}")
+
+        # After the data has been submitted, clear all the displays
         self.clear_all()
 
 

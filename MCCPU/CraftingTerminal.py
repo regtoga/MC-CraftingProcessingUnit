@@ -9,7 +9,7 @@ class CraftingTerminal:
     def __init__(self, root):
         """The Crafting Terminal is where the user will select the items they want to craft and how many of them to be crafted"""
         self.root = root
-        
+
         #name of the GUI
         if __name__ == "__main__":
             self.root.title("Crafting Terminal")
@@ -114,9 +114,15 @@ class CraftingTerminal:
 
 
     def craft_item(self):
-        """When the craft button is pressed this function execute and send the data over to the cpu"""
+        """When the craft button is pressed this function execute and send the data over to the CPU"""
+        # Collect item selection states
+        selected_items = [btn.cget("text") for btn in self.item_buttons]
+
+        # Collect number of items wanted
+        number_of_items = int("".join(segment.cget("text") for segment in self.seven_segments))
+
         # Placeholder for crafting logic
-        print("Craft button pressed")
+        print(f"Craft button pressed with items: {selected_items} and number: {number_of_items}")
 
 
 
