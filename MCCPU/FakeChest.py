@@ -19,9 +19,6 @@ class FakeChest:
         self.conn = sqlite3.connect(self.memory_db_path)
         self.cursor = self.conn.cursor()
 
-        #keeps track if there is more than one pop up
-        self.current_popup = None
-
         #Create the GUI
         self.create_gui()
 
@@ -76,7 +73,7 @@ class FakeChest:
         self.item_entry = tk.Entry(self.control_frame)
         self.item_entry.grid(row=1, column=1, padx=5, pady=5)
 
-        tk.Label(self.control_frame, text="Ammount in Storage:").grid(row=2, column=0, padx=5, pady=5)
+        tk.Label(self.control_frame, text="ammount in Storage:").grid(row=2, column=0, padx=5, pady=5)
         self.ammount_entry = tk.Entry(self.control_frame)
         self.ammount_entry.grid(row=2, column=1, padx=5, pady=5)
 
@@ -107,50 +104,20 @@ class FakeChest:
             if address in self.buttons:
                 self.buttons[address].config(text=item)
 
-    def non_modal_messagebox(self, title, message):
-        # Close the current popup if it exists
-        if self.current_popup is not None:
-            self.current_popup.destroy()
-        
-        popup = tk.Toplevel()
-        self.current_popup = popup
-        popup.title(title)
-        
-        # Remove resizability
-        popup.resizable(False, False)
-        
-        # Disable minimize and maximize buttons, keeping only the close button
-        popup.attributes('-toolwindow', True)
-        
-        # Create the message label and OK button
-        label = tk.Label(popup, text=message)
-        label.pack(pady=10, padx=10)
-        button = tk.Button(popup, text="OK", command=popup.destroy)
-        button.pack(pady=5)
-        
-        # Calculate position to center the popup
-        popup.update_idletasks()  # Ensure the geometry is updated
-        screen_width = popup.winfo_screenwidth()
-        screen_height = popup.winfo_screenheight()
-        popup_width = popup.winfo_width()
-        popup_height = popup.winfo_height()
-        
-        x = (screen_width // 2) - (popup_width // 2)
-        y = (screen_height // 2) - (popup_height // 2)
-        
-        popup.geometry(f'{popup_width}x{popup_height}+{x}+{y}')
-        
-        # Reset the current popup reference when it is closed
-        popup.protocol("WM_DELETE_WINDOW", self.on_popup_close)
-
-    def on_popup_close(self):
-        self.current_popup.destroy()
-        self.current_popup = None
-
     def show_message(self, address):
         """When a button is clicked we will show its address"""
-        self.non_modal_messagebox("Button Clicked", f"Address: {address}")
-        #messagebox.showinfo("Button Clicked", f"Address: {address}")
+
+        self.cursor.execute("SELECT address, item, ammount FROM button_states")
+        rows = self.cursor.fetchall()
+        for row in rows:
+            aaddress, item, ammount = row
+            if aaddress == address:
+                self.address_entry.delete(0, tk.END)
+                self.address_entry.insert(0, aaddress)
+                self.item_entry.delete(0, tk.END)
+                self.item_entry.insert(0, item)
+                self.ammount_entry.delete(0, tk.END)
+                self.ammount_entry.insert(0, ammount)
 
     def add_update_button(self):
         """this function checks if an input is valid before appending it to the database and updating the text on a button"""
