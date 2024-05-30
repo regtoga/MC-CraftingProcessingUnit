@@ -7,55 +7,61 @@ class FakeChest:
 
     def __init__(self, root):
         self.root = root
+        #if the program is standalone use this title
         if __name__ == "__main__":
             self.root.title("Fake Chest")
 
+        #find the database and write down the path, finally connect to the database
         self.memory_db_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "Storage.db")
-
         self.conn = sqlite3.connect(self.memory_db_path)
-
         self.cursor = self.conn.cursor()
 
+        #Create the GUI
         self.create_gui()
 
     def create_gui(self):
+        #give the GUI an ammount of space to exist
         self.root.grid_rowconfigure(1, weight=1)
         self.root.grid_columnconfigure(0, weight=1)
 
-        # Frame for the original crafting and recipe terminals (existing content)
+        #Frame for the original crafting and recipe terminals
         self.existing_frame = tk.Frame(self.root)
         self.existing_frame.grid(row=0, column=0, padx=10, pady=10, sticky="nsew")
 
-        # Frame for the new chest buttons with scrollbars
+        #Frame for the new chest buttons with scrollbars
         self.chest_frame = tk.Frame(self.root)
         self.chest_frame.grid(row=1, column=0, padx=10, pady=10, sticky="nsew")
 
-        # Configure grid weights to allow proper expansion
+        #Configure grid weights to allow proper expansion
         self.chest_frame.grid_rowconfigure(0, weight=1)
         self.chest_frame.grid_columnconfigure(0, weight=1)
         self.chest_frame.grid_rowconfigure(2, weight=0)
         
-        # Canvas setup
+        #Setup the canvas for the chest frame
         self.canvas = tk.Canvas(self.chest_frame)
         self.canvas.grid(row=0, column=0, sticky="nsew")
 
+        #Create X scrollbars for the main canvas
         self.scrollbar_x = tk.Scrollbar(self.chest_frame, orient=tk.HORIZONTAL, command=self.canvas.xview)
         self.scrollbar_x.grid(row=1, column=0, sticky="ew")
 
+        #Create Y scrollbars for the main canvas
         self.scrollbar_y = tk.Scrollbar(self.chest_frame, orient=tk.VERTICAL, command=self.canvas.yview)
         self.scrollbar_y.grid(row=0, column=1, sticky="ns")
 
+        #bind the two scrollbars to the canvas
         self.canvas.configure(xscrollcommand=self.scrollbar_x.set, yscrollcommand=self.scrollbar_y.set)
         self.canvas.bind('<Configure>', lambda e: self.canvas.configure(scrollregion=self.canvas.bbox("all")))
 
+        #Create the frame for the canvas controls
         self.grid_frame = tk.Frame(self.canvas)
         self.canvas.create_window((0, 0), window=self.grid_frame, anchor="nw")
 
-        # Create control frame inside chest_frame
+        #Create control frame inside chest_frame
         self.control_frame = tk.Frame(self.chest_frame)
         self.control_frame.grid(row=2, column=0, columnspan=2, pady=10)
 
-        # Entry and buttons in the control frame
+        #Entry and buttons in the control frame
         tk.Label(self.control_frame, text="Address (10-bit binary):").grid(row=0, column=0, padx=5, pady=5)
         self.address_entry = tk.Entry(self.control_frame)
         self.address_entry.grid(row=0, column=1, padx=5, pady=5)
@@ -83,6 +89,7 @@ class FakeChest:
         self.load_initial_state()
 
     def load_initial_state(self):
+        """Function goes to the database and loads all the data from that datbase onto the buttons"""
         self.cursor.execute("SELECT address, item FROM button_states")
         rows = self.cursor.fetchall()
         for row in rows:
@@ -91,27 +98,35 @@ class FakeChest:
                 self.buttons[address].config(text=item)
 
     def show_message(self, address):
+        """When a button is clicked we will show its address"""
         messagebox.showinfo("Button Clicked", f"Address: {address}")
 
     def add_update_button(self):
+        """this function checks if an input is valid before appending it to the database and updating the text on a button"""
+        #Get the inputs from the user
         address = self.address_entry.get()
         item = self.item_entry.get()
 
+        #Check if the address is the right lenght and only consisting of ones and zeros
         if len(address) != 10 or not all(bit in '01' for bit in address):
             messagebox.showerror("Invalid Address", "Address must be a 10-bit binary string.")
             return
 
+        #checks if the address actually corelates with a button
         if address not in self.buttons:
             messagebox.showerror("Invalid Address", "Address is not within valid range.")
             return
 
+        #Change the text on a button
         self.buttons[address].config(text=item)
 
+        #Update the database
         self.cursor.execute("REPLACE INTO button_states (address, item) VALUES (?, ?)", (address, item))
-
+        #Save the changes
         self.conn.commit()
 
     def delete_button(self):
+        """Deletes an item from the database then resets the text of the button to the address after validating the input"""
         address = self.address_entry.get()
 
         if len(address) != 10 or not all(bit in '01' for bit in address):
@@ -122,17 +137,20 @@ class FakeChest:
             messagebox.showerror("Invalid Address", "Address is not within valid range.")
             return
 
+        #Change the text on a button
         self.buttons[address].config(text=address)
-
+        #Update the database
         self.cursor.execute("DELETE FROM button_states WHERE address = ?", (address,))
-
+        #Save the changes
         self.conn.commit()
 
     def close(self):
+        """Close the connection to the database"""
         self.conn.close()
 
 # Database initialization
 def init_database(db_path):
+    """initiate the connection to the database, also create the database if it doesnt exist"""
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
     cursor.execute("""
@@ -145,16 +163,14 @@ def init_database(db_path):
     conn.close()
 
 if __name__ == "__main__":
-
+    #make the database at the correct location for local running
     init_database(os.path.join(os.path.dirname(os.path.abspath(__file__)), "Storage.db"))
 
     root = tk.Tk()
-
+    #give the GUI an ammount of space to exist
     root.grid_rowconfigure(0, weight=1)
     root.grid_columnconfigure(0, weight=1)
 
     app = FakeChest(root)
-
-    root.protocol("WM_DELETE_WINDOW", app.close)
-
+    #Run the GUI
     root.mainloop()

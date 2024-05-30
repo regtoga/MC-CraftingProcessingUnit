@@ -26,7 +26,7 @@ class MainApplication:
 
         # Frame for Fake Chest
         self.fake_chest = tk.LabelFrame(self.root, text="Fake Chest")
-        self.fake_chest.grid(row=1, column=0, columnspan=2, padx=10, pady=10, sticky="ew")
+        self.fake_chest.grid(row=0, column=2, columnspan=2, padx=10, pady=10, sticky="ew")
         self.fake_chest_terminal = FakeChest(self.fake_chest)
 
 
