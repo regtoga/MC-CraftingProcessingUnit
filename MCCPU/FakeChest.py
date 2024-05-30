@@ -10,11 +10,17 @@ class FakeChest:
         #if the program is standalone use this title
         if __name__ == "__main__":
             self.root.title("Fake Chest")
+        else:
+            #Creates a database if none exist
+            init_database(os.path.join(os.path.dirname(os.path.abspath(__file__)), "Storage.db"))
 
         #find the database and write down the path, finally connect to the database
         self.memory_db_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "Storage.db")
         self.conn = sqlite3.connect(self.memory_db_path)
         self.cursor = self.conn.cursor()
+
+        #keeps track if there is more than one pop up
+        self.current_popup = None
 
         #Create the GUI
         self.create_gui()
@@ -70,8 +76,12 @@ class FakeChest:
         self.item_entry = tk.Entry(self.control_frame)
         self.item_entry.grid(row=1, column=1, padx=5, pady=5)
 
-        tk.Button(self.control_frame, text="Add/Update", command=self.add_update_button).grid(row=2, column=0, padx=5, pady=5)
-        tk.Button(self.control_frame, text="Delete", command=self.delete_button).grid(row=2, column=1, padx=5, pady=5)
+        tk.Label(self.control_frame, text="Ammount in Storage:").grid(row=2, column=0, padx=5, pady=5)
+        self.ammount_entry = tk.Entry(self.control_frame)
+        self.ammount_entry.grid(row=2, column=1, padx=5, pady=5)
+
+        tk.Button(self.control_frame, text="Add/Update", command=self.add_update_button).grid(row=3, column=0, padx=5, pady=5)
+        tk.Button(self.control_frame, text="Delete", command=self.delete_button).grid(row=3, column=1, padx=5, pady=5)
 
         self.buttons = {}
 
@@ -97,15 +107,57 @@ class FakeChest:
             if address in self.buttons:
                 self.buttons[address].config(text=item)
 
+    def non_modal_messagebox(self, title, message):
+        # Close the current popup if it exists
+        if self.current_popup is not None:
+            self.current_popup.destroy()
+        
+        popup = tk.Toplevel()
+        self.current_popup = popup
+        popup.title(title)
+        
+        # Remove resizability
+        popup.resizable(False, False)
+        
+        # Disable minimize and maximize buttons, keeping only the close button
+        popup.attributes('-toolwindow', True)
+        
+        # Create the message label and OK button
+        label = tk.Label(popup, text=message)
+        label.pack(pady=10, padx=10)
+        button = tk.Button(popup, text="OK", command=popup.destroy)
+        button.pack(pady=5)
+        
+        # Calculate position to center the popup
+        popup.update_idletasks()  # Ensure the geometry is updated
+        screen_width = popup.winfo_screenwidth()
+        screen_height = popup.winfo_screenheight()
+        popup_width = popup.winfo_width()
+        popup_height = popup.winfo_height()
+        
+        x = (screen_width // 2) - (popup_width // 2)
+        y = (screen_height // 2) - (popup_height // 2)
+        
+        popup.geometry(f'{popup_width}x{popup_height}+{x}+{y}')
+        
+        # Reset the current popup reference when it is closed
+        popup.protocol("WM_DELETE_WINDOW", self.on_popup_close)
+
+    def on_popup_close(self):
+        self.current_popup.destroy()
+        self.current_popup = None
+
     def show_message(self, address):
         """When a button is clicked we will show its address"""
-        messagebox.showinfo("Button Clicked", f"Address: {address}")
+        self.non_modal_messagebox("Button Clicked", f"Address: {address}")
+        #messagebox.showinfo("Button Clicked", f"Address: {address}")
 
     def add_update_button(self):
         """this function checks if an input is valid before appending it to the database and updating the text on a button"""
         #Get the inputs from the user
         address = self.address_entry.get()
         item = self.item_entry.get()
+        ammount = self.ammount_entry.get()
 
         #Check if the address is the right lenght and only consisting of ones and zeros
         if len(address) != 10 or not all(bit in '01' for bit in address):
@@ -116,12 +168,18 @@ class FakeChest:
         if address not in self.buttons:
             messagebox.showerror("Invalid Address", "Address is not within valid range.")
             return
+        
+        #checks if the ammount is a real integer value if its not the default is zero         
+        try:
+            ammount = int(ammount)
+        except:
+            ammount = 0
 
         #Change the text on a button
         self.buttons[address].config(text=item)
 
         #Update the database
-        self.cursor.execute("REPLACE INTO button_states (address, item) VALUES (?, ?)", (address, item))
+        self.cursor.execute("REPLACE INTO button_states (address, item, ammount) VALUES (?, ?, ?)", (address, item, ammount))
         #Save the changes
         self.conn.commit()
 
@@ -156,7 +214,8 @@ def init_database(db_path):
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS button_states (
             address TEXT PRIMARY KEY,
-            item TEXT
+            item TEXT,
+            ammount INTEGER
         )
     """)
     conn.commit()
